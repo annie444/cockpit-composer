@@ -1,0 +1,67 @@
+#!/usr/bin/python3
+
+# checkpoint:
+# 1. create blueprint
+# 2. blueprint filter
+# 3. blueprint sort
+
+import composerlib
+import testlib
+
+
+@testlib.nondestructive
+@testlib.no_retry_when_changed
+class TestBlueprintList(composerlib.ComposerCase):
+
+    def testFilter(self):
+        b = self.browser
+
+        self.login_and_go("/composer")
+        b.wait_visible("#main")
+
+        # filter "openssh-server" blueprint
+        b.focus("input[aria-label='Blueprints search input']")
+        b.key_press("openssh")
+        b.wait_visible("tr[data-testid='openssh-server']")
+        b.wait_not_present("tr[data-testid='httpd-server']")
+        # clear filter
+        b.click(".pf-c-text-input-group__utilities button")
+        b.wait_visible("tr[data-testid='httpd-server']")
+
+        # filter "httpd" will show three matched blueprints
+        b.focus("input[aria-label='Blueprints search input']")
+        b.key_press("httpd")
+        b.wait_not_present("tr[data-testid='openssh-server']")
+        b.is_present("tr[data-testid='http-server']")
+        b.is_present("tr[data-testid='openssh-server-with-hostname']")
+        b.is_present("tr[data-testid='openssh-server-with-user']")
+        # clear filter
+        b.click(".pf-c-text-input-group__utilities button")
+        b.is_present("tr[data-testid='openssh-server']")
+
+    def testSort(self):
+        b = self.browser
+
+        self.login_and_go("/composer")
+        b.wait_visible("#main")
+
+        blueprint_list = [
+            "httpd-server",
+            "httpd-server-with-hostname",
+            "httpd-server-with-user",
+            "openssh-server"
+        ]
+        # sort from Z-A
+        b.wait_visible("table[aria-label='Blueprints table']")
+        b.click("#button-sort-blueprints")
+        for i, v in enumerate(sorted(blueprint_list, reverse=True)):
+            b.wait_text("table[aria-label='Blueprints table'] tbody tr:nth-child({}) a".format(i + 1), v)
+
+        # sort from A-Z
+        b.click("#button-sort-blueprints")
+        for i, v in enumerate(sorted(blueprint_list)):
+            b.wait_text("table[aria-label='Blueprints table'] tbody tr:nth-child({}) a".format(i + 1), v)
+
+
+if __name__ == '__main__':
+    testlib.test_main()

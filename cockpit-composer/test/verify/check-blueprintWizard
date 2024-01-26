@@ -1,0 +1,120 @@
+#!/usr/bin/python3
+
+import composerlib
+import testlib
+
+
+@testlib.nondestructive
+@testlib.no_retry_when_changed
+class TestBlueprintWizard(composerlib.ComposerCase):
+
+    def testCreateAndDeleteBlueprint(self):
+        b = self.browser
+
+        self.login_and_go("/composer", superuser=True)
+        b.wait_visible("#main")
+
+        b.click("button:contains('Create blueprint')")
+        b.wait_in_text(".pf-c-wizard__header", "Create blueprint")
+
+        b.set_input_text("input[id='blueprint.name']", "testName")
+        b.set_input_text("input[id='blueprint.description']", "testDescription")
+        b.click("button:contains('Next')")
+
+        # select openssh-server
+        b.set_input_text("div[data-testid='search-available-pkgs-input'] input", "openssh-server")
+        b.click("button[aria-label='Search button for available packages']")
+        with b.wait_timeout(360):
+            b.click("li[data-testid='openssh-server']")
+            b.click("button[aria-label='Add selected']")
+        # go to next page
+        b.click("button:contains('Next')")
+
+        b.set_input_text("input[id='customizations.kernel.append']", "testAppend")
+        b.set_input_text("input[id='customizations.kernel.name']", "testName")
+        b.click("button:contains('Next')")
+
+        # keep automatic partitioning for filesystem
+        b.click("button:contains('Next')")
+
+        b.set_input_text("div[id='customizations.services.enabled'] input", "example")
+        b.key_press("Enter")
+        b.set_input_text("div[id='customizations.services.disabled'] input", "example")
+        b.key_press("Enter")
+        b.click("button:contains('Next')")
+
+        # firewall has ports, enabled serxvices and disabled services, and zones
+        b.set_input_text("div[id='customizations.firewall.ports'] input", "22")
+        b.key_press("Enter")
+        b.set_input_text("div[id='customizations.firewall.services.enabled'] input", "example")
+        b.key_press("Enter")
+        b.set_input_text("div[id='customizations.firewall.services.disabled'] input", "example")
+        b.key_press("Enter")
+        b.click("button:contains('Next')")
+
+        b.click("button:contains('Add user')")
+        b.set_input_text("input[id='customizations.user[0].name']", "admin")
+        b.set_input_text("input[id='customizations.user[0].password']", "foobar")
+        b.set_input_text("textarea[id='customizations.user[0].key']", "ssh-rsa key")
+        b.click("input[id='customizations.user[0].isAdmin']")
+        b.click("button:contains('Next')")
+
+        # groups is just like users but has name and gid instead
+        b.click("button:contains('Add group')")
+        b.set_input_text("input[id='customizations.group[0].name']", "testGroup")
+        b.set_input_text("input[id='customizations.group[0].gid']", "123")
+        b.click("button:contains('Next')")
+
+        # sshkyes is just like users but has key and user instead
+        b.click("button:contains('Add key')")
+        b.set_input_text("textarea[id='customizations.sshkey[0].key']", "ssh-rsa key")
+        b.set_input_text("input[id='customizations.sshkey[0].user']", "admin")
+        b.click("button:contains('Next')")
+
+        # timezone has timezone and ntp servers
+        b.set_input_text("input[id='customizations.timezone.timezone']", "Europe/Berlin")
+        b.set_input_text("div[id='customizations.timezone.ntpservers'] input", "test")
+        b.key_press("Enter")
+        b.click("button:contains('Next')")
+
+        # locale has keyboard and language
+        b.set_input_text("input[id='customizations.locale.keyboard']", "testKeyboard")
+        b.set_input_text("div[id='customizations.locale.languages'] input", "testLanguage")
+        b.key_press("Enter")
+        b.click("button:contains('Next')")
+
+        # other has hostname and installation device
+        b.set_input_text("input[id='customizations.hostname']", "testHost")
+        b.set_input_text("input[id='customizations.installation_device']", "/dev/sda1")
+        b.click("button:contains('Next')")
+
+        b.set_input_text("input[id='customizations.fdo.manufacturing_server_url']", "https://test.com")
+        b.set_input_text("input[id='customizations.fdo.diun_pub_key_insecure']", "keyInsecure")
+        b.set_input_text("input[id='customizations.fdo.diun_pub_key_hash']", "keyHash")
+        b.set_input_text("input[id='customizations.fdo.diun_pub_key_root_certs']", "rootCerts")
+        b.click("button:contains('Next')")
+
+        # openscap has datastream and profile_id
+        b.set_input_text("input[id='customizations.openscap.datastream']", "testDatastream")
+        b.set_input_text("input[id='customizations.openscap.profile_id']", "testProfile")
+        b.click("button:contains('Next')")
+
+        # TODO: add test for ignition
+        b.click("button:contains('Next')")
+
+        b.click(".pf-c-wizard__footer button:contains('Save')")
+        # verify that blueprint was created
+        b.is_present("tr[data-testid='testName']")
+
+        # navigate to blueprint list
+        b.click("a:contains('Back to blueprints')")
+
+        # delete blueprint
+        b.click("tr[data-testid='testName'] button:contains('Delete')")
+        b.is_visible("div[id='modal-delete-blueprint']")
+        b.click("footer button:contains('Delete')")
+        b.wait_not_present("tr[data-testid='testName']")
+
+
+if __name__ == '__main__':
+    testlib.test_main()

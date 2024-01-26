@@ -1,0 +1,20 @@
+#!/bin/sh -e
+# This is the expected entry point for Cockpit CI; will be called without
+# arguments but with an appropriate $TEST_OS, and optionally $TEST_SCENARIO
+
+TEST_SCENARIO="${TEST_SCENARIO:-}"
+[ "${TEST_SCENARIO}" = "${TEST_SCENARIO##firefox}" ] || export TEST_BROWSER=firefox
+
+# overlays are too big for bot's 10GB /tmp tmpfs
+TEST_OVERLAY_DIR="$(pwd)/tmp/run"
+mkdir -p $TEST_OVERLAY_DIR
+
+export RUN_TESTS_OPTIONS=--track-naughties
+
+make check
+
+# If successful, report code coverage result to codecov.io
+if [ -f ~/.config/codecov-token ]; then
+  token=$(cat ~/.config/codecov-token | sed 's/\n//g')
+  curl --silent localhost:8080/foo.sh | CODECOV_TOKEN=$token bash
+fi

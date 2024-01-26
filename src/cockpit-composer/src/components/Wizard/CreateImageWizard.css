@@ -1,0 +1,23 @@
+.pf-c-popover[data-popper-reference-hidden="true"] {
+  font-weight: initial;
+  visibility: initial;
+  pointer-events: initial;
+}
+
+.upload-checkbox-popover-button {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.pf-c-dual-list-selector__menu {
+  --pf-c-dual-list-selector__menu--MinHeight: 20.5rem;
+}
+
+#user-table table thead tr th {
+  padding-top: 0;
+  padding-left: 0;
+}
+
+#user-table table tr td {
+  padding-left: 0;
+}

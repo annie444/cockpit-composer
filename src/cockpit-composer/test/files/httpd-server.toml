@@ -1,0 +1,17 @@
+name = "httpd-server"
+description = "httpd server image"
+version = "0.0.1"
+modules = []
+groups = []
+
+[[packages]]
+name = "httpd"
+version = "*"
+
+[[packages]]
+name = "tmux"
+version = "*"
+
+[[packages]]
+name = "vim-enhanced"
+version = "*"

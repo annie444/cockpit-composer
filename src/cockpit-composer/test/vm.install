@@ -1,0 +1,35 @@
+#!/bin/sh
+# image-customize script to enable cockpit and osbuild-composer in test VMs
+# The application RPM will be installed separately
+set -eux
+
+# on virt-install images with LVM, resize root partition to fill free space
+VG=$(vgs --noheadings -o vg_name)
+if [ -n "$VG" ]; then
+    echo -en "n\n\n\n\n\nw\n" | fdisk /dev/vda
+    pvcreate /dev/vda3
+    vgextend $VG /dev/vda3
+    lvextend -r -l +100%FREE $VG/root
+fi
+
+# Repositories in /etc/osbuild-composer/repositories are used only for on-premise
+# Copy rpmrepo snapshots for use in tests
+REPODIR=/etc/osbuild-composer/repositories
+sudo mkdir -p $REPODIR
+# Copy all repo overrides
+cp /home/admin/files/rhel-89.json /etc/osbuild-composer/repositories/rhel-89.json
+cp /home/admin/files/rhel-93.json /etc/osbuild-composer/repositories/rhel-93.json
+ln -s /etc/osbuild-composer/repositories/rhel-93.json /etc/osbuild-composer/repositories/rhel-93-beta.json
+ln -s /etc/osbuild-composer/repositories/rhel-93.json /etc/osbuild-composer/repositories/rhel-93-ga.json
+
+# Allow cockpit port (9090) in INPUT chain
+# Do not reload firewall rule during image generation
+if type firewall-cmd >/dev/null 2>&1; then
+    firewall-cmd --add-service=cockpit --permanent
+fi
+
+# Make cockpit.socket auto-start when system started
+systemctl enable --now cockpit.socket
+
+# Make osbuild-composer.socket auto-start when system started
+systemctl enable --now osbuild-composer.socket
